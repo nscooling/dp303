@@ -11,9 +11,3 @@ set(MAIN_SRC
   "${SRC_PATH}/Signal.cpp"
   "${SRC_PATH}/Thread.cpp"
 )
-
-# Set project test source files.
-#set(TEST_SRC
-#  "${TEST_SRC_PATH}/testCppbase.cpp"
-#  "${TEST_SRC_PATH}/testFactorial.cpp"
-#)
