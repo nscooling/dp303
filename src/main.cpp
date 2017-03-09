@@ -3,9 +3,6 @@
 #include "Filters.h"
 #include "feabhOS_task.h"
 
-#include <iostream>
-#include <cassert>
-
 
 int main()
 {
@@ -15,10 +12,8 @@ int main()
   LowPass   lowpass(5);
   Display   display;
 
-  FilterBase::queue_type pipe1;
-  FilterBase::queue_type pipe2;
-
-  generator >>= pipe1 >>= lowpass >>= pipe2 >>= display;
+  bind(generator, lowpass);
+  bind(lowpass, display);
 
   feabhOS::Thread gen_thread;
   feabhOS::Thread lp_thread;

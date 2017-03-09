@@ -7,67 +7,79 @@ using std::rand;
 using std::cout;
 using std::endl;
 
-FilterBase& operator >>= (FilterBase& filter, FilterBase::queue_type& queue)
-{
-  filter.output = &queue;
-  return filter;
-}
-
-
-FilterBase::queue_type& operator >>= (FilterBase::queue_type& queue, FilterBase& filter)
-{
-  filter.input = &queue;
-  return queue;
-}
 
 // --------------------------------------------------------------------------------------
 // Generator class
 //
-Generator::Generator()
+Generator::Generator() : lowPass(0)
 {
 }
 
 
 bool Generator::run()
 {
-  assert(output != 0);
   int value;
 
   value = rand() % 10;
   cout << "Generator::run - generating: " << value << endl;
-  output->push(value);
+  
+  // Make asynchronous call to LowPass
+  //
+  if(lowPass != 0)
+  {
+    lowPass->process(value);
+  }
+
   feabhOS::Thread::sleep(1000);
 
   return false;
 }
 
 
+void bind(Generator& g, LowPass& lp)
+{
+  g.lowPass = &lp;
+}
+
 // --------------------------------------------------------------------------------------
 // LowPass class
 //
-LowPass::LowPass(int filterValue) : set_point(filterValue)
+LowPass::LowPass(int filterValue) : set_point(filterValue), display(0)
 {
 }
 
 
 bool LowPass::run()
-{ 
-  assert(input  != 0);
-  assert(output != 0);
-  int value;
+{
+  CallFrame dispatch = msgQ.pull();
+  (this->*dispatch.call)(dispatch.arg);
+  return false;
+}
 
-  value = input->pull();
+
+void LowPass::process(int value)
+{
+  msgQ.push(CallFrame(&LowPass::process_impl, value));
+}
+
+
+void LowPass::process_impl(int value)
+{
   if(value < set_point)
   {
     cout << "Filter::run - PASS: " << value << endl;
-    output->push(value);
+    display->show(value);
   }
   else
   {
     cout << "Filter::run - REMOVE: " << value << endl;
   }
+}
 
-  return false;
+
+void bind(LowPass& lp, Display& disp)
+{
+  lp.display = &disp;
 }
 
 
@@ -81,13 +93,19 @@ Display::Display()
 
 bool Display::run()
 {
-  assert(input != 0);
-  int value;
-
-  value = input->pull();
-  {
-    cout << "Display::run : " << value << endl;
-  }
-
+  CallFrame dispatch = msgQ.pull();
+  (this->*dispatch.call)(dispatch.arg);
   return false;
+}
+
+
+void Display::show(int value)
+{
+  msgQ.push(CallFrame(&Display::show_impl, value));
+}
+
+
+void Display::show_impl(int value)
+{
+  cout << "Display::run : " << value << endl;
 }
