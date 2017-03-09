@@ -4,15 +4,27 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Condition.cpp \
 ../src/Filters.cpp \
+../src/Mutex.cpp \
+../src/Signal.cpp \
+../src/Thread.cpp \
 ../src/main.cpp 
 
 OBJS += \
+./src/Condition.o \
 ./src/Filters.o \
+./src/Mutex.o \
+./src/Signal.o \
+./src/Thread.o \
 ./src/main.o 
 
 CPP_DEPS += \
+./src/Condition.d \
 ./src/Filters.d \
+./src/Mutex.d \
+./src/Signal.d \
+./src/Thread.d \
 ./src/main.d 
 
 
