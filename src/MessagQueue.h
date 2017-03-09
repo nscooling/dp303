@@ -4,7 +4,7 @@
 #include <queue>
 
 #include "Mutex.h"
-#include "Signal.h"
+#include "Condition.h"
 
 using std::queue;
 
@@ -22,8 +22,8 @@ public:
 
 private:
   feabhOS::Mutex mutex;
-  feabhOS::Signal hasData;
-  feabhOS::Signal hasSpace;
+  feabhOS::Condition hasData;
+  feabhOS::Condition hasSpace;
 };
 
 template <typename T, size_t sz>
@@ -35,15 +35,13 @@ T MessageQueue<T, sz>::pull()
   {
     while(queue<T>::empty())
     {
-      mutex.unlock();
-      hasData.wait(WAIT_FOREVER);
-      mutex.lock(WAIT_FOREVER);
+      hasData.wait(mutex, WAIT_FOREVER);
     }
 
     value = queue<T>::front();
     queue<T>::pop();
 
-    hasSpace.notifyAll();
+    hasSpace.notify();
   }
   return value;
 }
@@ -56,14 +54,12 @@ void MessageQueue<T, sz>::push(const T& value)
   {
     while(queue<T>::size() == sz)
     {
-      mutex.unlock();
-      hasSpace.wait(WAIT_FOREVER);
-      mutex.lock(WAIT_FOREVER);
+      hasSpace.wait(mutex, WAIT_FOREVER);
     }
 
     queue<T>::push(value);
 
-    hasData.notifyAll();
+    hasData.notify();
   }
 }
 
