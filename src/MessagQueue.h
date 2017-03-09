@@ -31,27 +31,19 @@ T MessageQueue<T, sz>::pull()
 {
   T value;
 
-  mutex.lock(WAIT_FOREVER);
-
-  // Note: we must call the underlying empty()
-  // function, not our thread-safe version, to
-  // prevent a potential deadlock
-  //
-  if(queue<T>::empty())
+  CRITICAL_SECTION(mutex)
   {
-    // We must unlock the mutex, since
-    // we are throwing an exception (and
-    // leaving the function)
-    //
-    mutex.unlock();
-    throw std::range_error("Queue is empty");
+    if(queue<T>::empty())
+    {
+      // Mutex is unlocked by ScopeLock if exception
+      // if thrown
+      //
+      throw std::out_of_range("Queue limit exceeded");
+    }
+
+    value = queue<T>::front();
+    queue<T>::pop();
   }
-
-  value = queue<T>::front();
-  queue<T>::pop();
-  
-  mutex.unlock();
-
   return value;
 }
 
@@ -59,20 +51,14 @@ T MessageQueue<T, sz>::pull()
 template <typename T, size_t sz>
 void MessageQueue<T, sz>::push(const T& value)
 {
-  mutex.lock(WAIT_FOREVER);
-
-  if(queue<T>::size() == sz)
+  CRITICAL_SECTION(mutex)
   {
-    // We must unlock the mutex, since
-    // we are throwing an exception (and
-    // leaving the function)
-    //
-    mutex.unlock();
-    throw std::range_error("Queue limit exceeded");
+    if(queue<T>::size() == sz)
+    {
+      throw std::out_of_range("Queue limit exceeded");
+    }
+    queue<T>::push(value);
   }
-  queue<T>::push(value);
-
-  mutex.unlock();
 }
 
 
@@ -81,10 +67,13 @@ bool MessageQueue<T, sz>::isEmpty()
 {
   bool is_empty;
 
-  mutex.lock(WAIT_FOREVER);
-  is_empty = queue<T>::empty();
-  mutex.unlock();
-
+  CRITICAL_SECTION(mutex)
+  {
+    // ScopeLock handles the unlocking
+    // of the mutex on exit
+    //
+    is_empty = queue<T>::empty();
+  }
   return is_empty;
 }
 

@@ -22,7 +22,31 @@ namespace feabhOS
     //
     feabhOS_MUTEX handle;
   };
-  
+
+
+  // ---------------------------------------------------
+  // ScopeLock implements the 
+  // scope-locked idiom for 
+  // mutexes.
+  //
+  class ScopeLock
+  {
+  public:
+    ScopeLock(Mutex& mtx) : mutex(mtx) { mutex.lock(WAIT_FOREVER); }
+    ~ScopeLock() { mutex.unlock(); }
+    operator bool() { return true; }
+
+  private:
+    Mutex& mutex;
+  };
+
 } // namespace feabhOS  
+
+// Neat little macro to simplify code.
+// Requires the ScopeLock class to implement
+// operator bool()
+//
+#define CRITICAL_SECTION(mtx) if(feabhOS::ScopeLock s = mtx)
+
 
 #endif // MUTEX_H
