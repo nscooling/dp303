@@ -4,12 +4,12 @@
 #include "MessagQueue.h"
 #include "Thread.h"
 
-class FilterBase : public feabhOS::Thread
+class FilterBase : public feabhOS::IRunnable
 {
 public:
   typedef MessageQueue<int, 16> queue_type;
 
-  FilterBase() : Thread(), input(0), output(0) {}
+  FilterBase() : input(0), output(0) {}
 
 protected:
   queue_type* input;
@@ -24,7 +24,7 @@ class Generator : public FilterBase
 {
 public:
   Generator();
-  virtual int run();
+  virtual bool run();
 };
 
 
@@ -32,7 +32,7 @@ class LowPass : public FilterBase
 {
 public:
   LowPass(int filterValue = 10);
-  virtual int run();
+  virtual bool run();
 
 private:
   int set_point;
@@ -43,7 +43,7 @@ class Display : public FilterBase
 {
 public:
   Display();
-  virtual int run();
+  virtual bool run();
 };
 
 #endif // FILTERS_H

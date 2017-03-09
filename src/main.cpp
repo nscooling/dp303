@@ -6,39 +6,6 @@
 #include <iostream>
 #include <cassert>
 
-int generator_run(void* arg)
-{
-  Generator* gen = reinterpret_cast<Generator*>(arg);
-  while(true)
-  {
-    gen->run();
-    feabhOS_task_sleep(1000);
-  }
-  return 1;
-}
-
-
-int lowpass_run(void* arg)
-{
-  LowPass* lp = reinterpret_cast<LowPass*>(arg);
-  while(true)
-  {
-    lp->run();
-  }
-  return 1;
-}
-
-
-int display_run(void* arg)
-{
-  Display* disp = reinterpret_cast<Display*>(arg);
-  while(true)
-  {
-    disp->run();
-  }
-  return 1;
-}
-
 
 int main()
 {
@@ -53,13 +20,17 @@ int main()
 
   generator >>= pipe1 >>= lowpass >>= pipe2 >>= display;
 
-  generator.start();
-  lowpass.start();
-  display.start();
+  feabhOS::Thread gen_thread;
+  feabhOS::Thread lp_thread;
+  feabhOS::Thread disp_thread;
+  
+  gen_thread.start(generator);
+  lp_thread.start(lowpass);
+  disp_thread.start(display);
 
-  generator.join();
-  lowpass.join();
-  display.join();
+  gen_thread.join();
+  lp_thread.join();
+  disp_thread.join();
 
   feabhOS::Scheduler::start();
   // ----------------------------
