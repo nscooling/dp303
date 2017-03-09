@@ -31,10 +31,15 @@ Generator::Generator()
 int Generator::run()
 {
   assert(output != 0);
+  int value;
 
-  int value = rand() % 10;
-  cout << "Generator::run - generating: " << value << endl;
-  output->push(value);
+  while(true)
+  {
+    value = rand() % 10;
+    cout << "Generator::run - generating: " << value << endl;
+    output->push(value);
+    feabhOS::Thread::sleep(1000);
+  }
   return value;
 }
 
@@ -51,18 +56,22 @@ int LowPass::run()
 { 
   assert(input  != 0);
   assert(output != 0);
+  int value;
 
-  if(input->isEmpty()) return -1; // nothing to pull
+  while(true)
+  {
+    if(input->isEmpty()) continue; // nothing to pull
 
-  int value = input->pull();
-  if(value < set_point)
-  {
-    cout << "Filter::run - PASS: " << value << endl;
-    output->push(value);
-  }
-  else
-  {
-    cout << "Filter::run - REMOVE: " << value << endl;
+    value = input->pull();
+    if(value < set_point)
+    {
+      cout << "Filter::run - PASS: " << value << endl;
+      output->push(value);
+    }
+    else
+    {
+      cout << "Filter::run - REMOVE: " << value << endl;
+    }
   }
   return value;
 }
@@ -79,12 +88,16 @@ Display::Display()
 int Display::run()
 {
   assert(input != 0);
+  int value;
 
-  if(input->isEmpty()) return -1; // nothing to pull
-
-  int value = input->pull();
+  while(true)
   {
-    cout << "Display::run : " << value << endl;
+    if(input->isEmpty()) continue; // nothing to pull
+
+    value = input->pull();
+    {
+      cout << "Display::run : " << value << endl;
+    }
   }
   return value;
 }

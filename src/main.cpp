@@ -53,33 +53,13 @@ int main()
 
   generator >>= pipe1 >>= lowpass >>= pipe2 >>= display;
 
-  feabhOS_error error;
-  feabhOS_TASK  gen_task;
-  feabhOS_TASK  lp_task;
-  feabhOS_TASK  disp_task;
+  generator.start();
+  lowpass.start();
+  display.start();
 
-  error = feabhOS_task_create(&gen_task,
-                              &generator_run,
-                              &generator,
-                              STACK_NORMAL,
-                              PRIORITY_NORMAL);
-  assert(error == ERROR_OK);
-
-
-  error = feabhOS_task_create(&lp_task,
-                              &lowpass_run,
-                              &lowpass,
-                              STACK_NORMAL,
-                              PRIORITY_NORMAL);
-  assert(error == ERROR_OK);
-
-
-  error = feabhOS_task_create(&disp_task,
-                              &display_run,
-                              &display,
-                              STACK_NORMAL,
-                              PRIORITY_NORMAL);
-  assert(error == ERROR_OK);
+  generator.join();
+  lowpass.join();
+  display.join();
 
   feabhOS::Scheduler::start();
   // ----------------------------
