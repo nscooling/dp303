@@ -56,8 +56,6 @@ bool LowPass::run()
   assert(output != 0);
   int value;
 
-  if(input->isEmpty()) return false; // nothing to pull
-
   value = input->pull();
   if(value < set_point)
   {
@@ -85,8 +83,6 @@ bool Display::run()
 {
   assert(input != 0);
   int value;
-
-  if(input->isEmpty()) return false; // nothing to pull
 
   value = input->pull();
   {

@@ -2,11 +2,9 @@
 #define MESSAGEQUEUE_H
 
 #include <queue>
-#include <limits>
-#include <exception>
-#include <stdexcept>
 
 #include "Mutex.h"
+#include "Signal.h"
 
 using std::queue;
 
@@ -16,7 +14,7 @@ class MessageQueue : private std::queue<T>
 public:
   typedef T value_type;
 
-  MessageQueue() : queue<T>(), mutex() {}
+  MessageQueue() : queue<T>(), mutex(), hasData(), hasSpace() {}
 
   T pull();
   void push(const T& value);
@@ -24,6 +22,8 @@ public:
 
 private:
   feabhOS::Mutex mutex;
+  feabhOS::Signal hasData;
+  feabhOS::Signal hasSpace;
 };
 
 template <typename T, size_t sz>
@@ -33,16 +33,17 @@ T MessageQueue<T, sz>::pull()
 
   CRITICAL_SECTION(mutex)
   {
-    if(queue<T>::empty())
+    while(queue<T>::empty())
     {
-      // Mutex is unlocked by ScopeLock if exception
-      // if thrown
-      //
-      throw std::out_of_range("Queue limit exceeded");
+      mutex.unlock();
+      hasData.wait(WAIT_FOREVER);
+      mutex.lock(WAIT_FOREVER);
     }
 
     value = queue<T>::front();
     queue<T>::pop();
+
+    hasSpace.notifyAll();
   }
   return value;
 }
@@ -53,11 +54,16 @@ void MessageQueue<T, sz>::push(const T& value)
 {
   CRITICAL_SECTION(mutex)
   {
-    if(queue<T>::size() == sz)
+    while(queue<T>::size() == sz)
     {
-      throw std::out_of_range("Queue limit exceeded");
+      mutex.unlock();
+      hasSpace.wait(WAIT_FOREVER);
+      mutex.lock(WAIT_FOREVER);
     }
+
     queue<T>::push(value);
+
+    hasData.notifyAll();
   }
 }
 
